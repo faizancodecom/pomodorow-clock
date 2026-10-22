@@ -1,0 +1,1217 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pomodorw | Focus Timer</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="icon" href="icon/icon.png">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500&family=Fraunces:opsz,wght@9..144,300;9..144,400;9..144,500;9..144,600;9..144,700&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+:root {
+  --bg: #1a1612;
+  --bg-card: #221e18;
+  --bg-btn: #2d2720;
+  --text: #e6dccf;
+  --text-dim: #8a7e6e;
+  --text-muted: #5c5348;
+  --accent: #d4a353;
+  --accent-glow: rgba(212, 163, 83, 0.15);
+  --accent-dim: #8a6a38;
+  --accent-warm: #b8893e;
+  --border: #332c22;
+  --border-accent: #4d3f2a;
+  --distract: #c05a4a;
+  --distract-glow: rgba(192, 90, 74, 0.15);
+  --break-color: #7aa89f;
+  --break-dim: #3d5e57;
+  --radius: 16px;
+  --radius-sm: 10px;
+  --radius-full: 9999px;
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-bounce: cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+html { font-size: 16px; }
+body {
+  font-family: 'DM Sans', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  position: relative;
+}
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.75' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.25'/%3E%3C/svg%3E");
+  background-repeat: repeat;
+  background-size: 256px 256px;
+  opacity: 0.6;
+  pointer-events: none;
+  z-index: 1;
+}
+@keyframes glow-in { from { opacity: 0; } to { opacity: 1; } }
+body::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background: radial-gradient(ellipse 70% 55% at 50% 40%, rgba(212, 163, 83, 0.05) 0%, transparent 70%);
+  pointer-events: none;
+  z-index: 0;
+  animation: glow-in 1.5s ease both;
+}
+.settings-gear {
+  position: fixed; top: 24px; right: 24px; z-index: 10;
+  width: 40px; height: 40px; border-radius: 50%;
+  border: 1px solid var(--border); background: var(--bg-btn);
+  color: var(--text-dim); cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  transition: all 0.25s ease;
+  opacity: 0;
+  animation: fade-gear 0.6s 1.2s var(--ease-out) both;
+}
+@keyframes fade-gear {
+  from { opacity: 0; transform: rotate(-60deg) scale(0.8); }
+  to { opacity: 1; transform: rotate(0) scale(1); }
+}
+.settings-gear:hover { color: var(--text); border-color: var(--text-dim); transform: rotate(30deg); }
+.settings-gear svg { width: 18px; height: 18px; }
+.container {
+  position: relative; z-index: 2;
+  display: flex; flex-direction: column; align-items: center;
+  gap: 36px; padding: 24px;
+}
+.mode-badge {
+  font-size: 0.7rem; font-weight: 500; letter-spacing: 0.18em;
+  text-transform: uppercase; color: var(--text-dim);
+  padding: 6px 16px; border: 1px solid var(--border);
+  border-radius: var(--radius-full); background: var(--bg-btn);
+  transition: all 0.35s ease;
+  opacity: 0;
+  animation: slide-down 0.6s 0.1s var(--ease-out) both;
+}
+.mode-badge.focus { color: var(--accent); border-color: var(--accent-dim); }
+.mode-badge.break { color: var(--break-color); border-color: var(--break-dim); }
+@keyframes slide-down {
+  0% { transform: translateY(-120px); opacity: 0; }
+  100% { transform: translateY(0); opacity: 1; }
+}
+.mode-badge.switching { opacity: 0; transform: translateY(-12px) scale(0.95); }
+.avatar-wrap {
+  height: 80px; display: flex; align-items: center; justify-content: center;
+  opacity: 0;
+  animation: zoom-bounce 0.7s 0.2s var(--ease-bounce) both;
+}
+@keyframes zoom-bounce {
+  0% { transform: scale(0); opacity: 0; }
+  60% { transform: scale(1.15); opacity: 1; }
+  80% { transform: scale(0.92); }
+  100% { transform: scale(1); opacity: 1; }
+}
+.avatar-icon {
+  width: 72px; height: 72px; display: flex; align-items: center; justify-content: center;
+  transition: transform 0.4s var(--ease-bounce);
+  filter: drop-shadow(0 0 14px rgba(212, 163, 83, 0.2));
+  color: var(--accent);
+}
+.avatar-icon svg { width: 100%; height: 100%; display: block; overflow: visible; }
+.avatar-icon.pop { animation: avatar-pop 0.4s var(--ease-bounce); }
+@keyframes avatar-pop {
+  0% { transform: scale(1); }
+  40% { transform: scale(1.25) rotate(-8deg); }
+  70% { transform: scale(0.92); }
+  100% { transform: scale(1) rotate(0); }
+}
+.avatar-icon.bounce { animation: avatar-bounce 0.6s ease infinite; }
+@keyframes avatar-bounce {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-6px); }
+}
+.avatar-label {
+  font-size: 0.55rem; letter-spacing: 0.12em; text-transform: uppercase;
+  color: var(--text-muted); text-align: center; margin-top: 4px;
+}
+.clock {
+  position: relative; width: 350px; height: 350px;
+  opacity: 0;
+  animation: clock-pop 0.8s 0.35s var(--ease-out) both;
+}
+@keyframes clock-pop {
+  0% { transform: scale(0.85); opacity: 0; }
+  100% { transform: scale(1); opacity: 1; }
+}
+.clock-ring-svg { position: absolute; inset: 0; width: 100%; height: 100%; transform: rotate(-90deg); }
+.clock-ring-bg { fill: none; stroke: var(--border); stroke-width: 3px; }
+.clock-ring-progress {
+  fill: none; stroke: var(--accent); stroke-width: 3px; stroke-linecap: round;
+  transition: stroke-dashoffset 0.5s linear;
+}
+.clock-ring-progress.paused { transition: none; }
+.clock-face { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+.clock-time {
+  font-family: 'Fraunces', serif; font-weight: 300; font-size: 5.2rem;
+  letter-spacing: 0.04em; color: var(--text); line-height: 1;
+  font-variant-numeric: tabular-nums; transition: color 0.4s ease;
+}
+.clock-time.break-time { color: var(--break-color); }
+.clock-label {
+  font-size: 0.6rem; font-weight: 400; letter-spacing: 0.22em;
+  text-transform: uppercase; color: var(--text-muted); margin-top: 8px;
+}
+.tick-marks { position: absolute; inset: 0; pointer-events: none; opacity: 0; animation: fade-in 0.6s 0.5s ease both; }
+@keyframes fade-in { from { opacity: 0; } to { opacity: 1; } }
+.tick-marks svg { width: 100%; height: 100%; }
+.tick { stroke: var(--border-accent); stroke-width: 1; }
+.tick.major { stroke: var(--accent-dim); stroke-width: 1.5; }
+.attention-status {
+  display: flex; align-items: center; gap: 8px;
+  font-size: 0.65rem; letter-spacing: 0.08em; color: var(--text-muted);
+  opacity: 0; animation: slide-up-short 0.5s 0.5s var(--ease-out) both;
+  transition: color 0.3s ease;
+}
+@keyframes slide-up-short { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+.attention-status .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--text-muted); transition: background 0.3s ease; }
+.attention-status.focused { color: var(--accent); }
+.attention-status.focused .dot { background: var(--accent); box-shadow: 0 0 6px var(--accent-glow); }
+.attention-status.distracted { color: var(--distract); }
+.attention-status.distracted .dot { background: var(--distract); box-shadow: 0 0 6px var(--distract-glow); }
+.attention-status.away { color: var(--text-dim); }
+.attention-status.away .dot { background: var(--text-dim); }
+.attention-status.disabled { color: var(--text-muted); }
+.attention-status.disabled .dot { background: var(--text-muted); }
+.controls {
+  display: flex; align-items: center; gap: 14px;
+  opacity: 0; animation: slide-up 0.6s 0.7s var(--ease-out) both;
+}
+@keyframes slide-up {
+  0% { transform: translateY(120px); opacity: 0; }
+  100% { transform: translateY(0); opacity: 1; }
+}
+.btn { border: none; background: none; cursor: pointer; font-family: 'DM Sans', sans-serif; -webkit-tap-highlight-color: transparent; user-select: none; }
+.btn { transition: transform 0.15s var(--ease-out), box-shadow 0.2s ease, background 0.2s ease, border-color 0.2s ease, color 0.2s ease, opacity 0.2s ease; }
+.btn:active { transform: scale(0.93); }
+.btn-primary { background: var(--accent); color: #1a1612; font-size: 0.85rem; font-weight: 500; letter-spacing: 0.08em; text-transform: uppercase; padding: 16px 50px; border-radius: var(--radius-full); box-shadow: 0 0 0 0 var(--accent-glow); min-width: 160px; }
+.btn-primary:hover { background: var(--accent-warm); box-shadow: 0 0 0 8px var(--accent-glow); }
+.btn-primary:active { box-shadow: 0 0 0 4px var(--accent-glow); }
+.btn-primary.running { background: transparent; color: var(--accent); box-shadow: inset 0 0 0 1.5px var(--accent-dim); }
+.btn-primary.running:hover { background: rgba(212, 163, 83, 0.06); box-shadow: inset 0 0 0 1.5px var(--accent); }
+.btn-icon { width: 46px; height: 46px; border-radius: 50%; display: flex; align-items: center; justify-content: center; background: var(--bg-btn); border: 1px solid var(--border); color: var(--text-dim); }
+.btn-icon:hover { color: var(--text); border-color: var(--text-dim); background: var(--border); }
+.btn-icon svg { width: 18px; height: 18px; }
+.btn-cam { position: relative; }
+.btn-cam .cam-dot { position: absolute; top: 2px; right: 2px; width: 8px; height: 8px; border-radius: 50%; background: var(--text-muted); border: 2px solid var(--bg); transition: background 0.3s ease; }
+.btn-cam.active .cam-dot { background: var(--break-color); box-shadow: 0 0 5px rgba(122, 168, 159, 0.5); }
+.btn-cam.error .cam-dot { background: var(--distract); }
+.btn-cam.loading .cam-dot { background: var(--accent); animation: cam-loading 0.8s ease infinite; }
+@keyframes cam-loading { 0%, 100% { opacity: 0.4; } 50% { opacity: 1; } }
+.footer { display: flex; align-items: center; gap: 24px; opacity: 0; animation: slide-up 0.6s 0.85s var(--ease-out) both; }
+.session-counter { font-size: 0.7rem; font-weight: 400; letter-spacing: 0.05em; color: var(--text-muted); }
+.session-counter span { color: var(--accent); }
+.mode-pills { display: flex; gap: 6px; }
+.pill { font-size: 0.6rem; font-weight: 500; letter-spacing: 0.1em; text-transform: uppercase; padding: 5px 12px; border-radius: var(--radius-full); border: 1px solid var(--border); color: var(--text-muted); background: transparent; cursor: pointer; transition: all 0.25s ease; font-family: 'DM Sans', sans-serif; }
+.pill:hover { border-color: var(--text-dim); color: var(--text-dim); }
+.pill.active { border-color: var(--accent-dim); color: var(--accent); background: rgba(212, 163, 83, 0.08); }
+.pill.active-break { border-color: var(--break-dim); color: var(--break-color); background: rgba(122, 168, 159, 0.08); }
+.cam-preview {
+  position: fixed; bottom: 20px; right: 20px; z-index: 999;
+  width: 120px; height: 90px; border-radius: 12px;
+  overflow: hidden; border: 1px solid var(--border-accent);
+  opacity: 0; transition: all 0.4s var(--ease-out);
+  pointer-events: none; isolation: isolate;
+  background: #0a0a08; box-shadow: 0 0 0 1px rgba(0,0,0,0.8), 0 4px 12px rgba(0,0,0,0.5);
+}
+.cam-preview.active { opacity: 1; }
+.cam-preview::before {
+  content: ''; position: absolute; inset: 0;
+  background: #050505; z-index: 0; border-radius: inherit;
+}
+.cam-preview video {
+  position: relative; z-index: 1;
+  width: 100%; height: 100%; object-fit: cover;
+  display: block; background: #050505;
+}
+@keyframes ring-pulse { 0% { stroke-opacity: 1; stroke-width: 3; } 50% { stroke-opacity: 0.5; stroke-width: 6; } 100% { stroke-opacity: 1; stroke-width: 3; } }
+.clock-ring-progress.pulse { animation: ring-pulse 0.6s ease 2; stroke: var(--distract); }
+.clock-ring-progress.pulse-return { animation: ring-pulse 0.6s ease 1; }
+.toast { position: fixed; bottom: 120px; left: 50%; transform: translateX(-50%) translateY(20px); background: rgba(26, 22, 18, 0.95); backdrop-filter: blur(12px); border: 1px solid var(--border); border-radius: var(--radius); padding: 14px 24px; display: flex; align-items: center; gap: 12px; font-size: 0.8rem; color: var(--text); opacity: 0; transition: all 0.4s var(--ease-out); pointer-events: none; z-index: 20; max-width: 400px; box-shadow: 0 8px 32px rgba(0,0,0,0.4); }
+.toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+.toast.distract { border-color: var(--distract); }
+.toast.return { border-color: var(--break-color); }
+.toast-icon { font-size: 1.4rem; }
+.toast-msg { flex: 1; line-height: 1.4; }
+.toast-msg .highlight { color: var(--accent); font-weight: 500; }
+.modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.7); backdrop-filter: blur(6px); z-index: 100; display: flex; align-items: center; justify-content: center; opacity: 0; pointer-events: none; transition: opacity 0.35s ease; }
+.modal-overlay.open { opacity: 1; pointer-events: all; }
+.modal { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius); width: 480px; max-width: 92vw; max-height: 85vh; overflow-y: auto; padding: 36px; transform: scale(0.92) translateY(20px); transition: transform 0.4s var(--ease-out); box-shadow: 0 20px 60px rgba(0,0,0,0.5); }
+.modal-overlay.open .modal { transform: scale(1) translateY(0); }
+.modal-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 28px; }
+.modal-title { font-family: 'Fraunces', serif; font-weight: 400; font-size: 1.2rem; color: var(--text); }
+.modal-close { width: 32px; height: 32px; border-radius: 50%; border: 1px solid var(--border); background: var(--bg-btn); color: var(--text-dim); cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.2s ease; }
+.modal-close:hover { color: var(--text); border-color: var(--text-dim); }
+.modal-close svg { width: 16px; height: 16px; }
+.setting-group { margin-bottom: 24px; }
+.setting-label { font-size: 0.7rem; font-weight: 500; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-dim); margin-bottom: 10px; display: block; }
+.setting-desc { font-size: 0.65rem; color: var(--text-muted); margin-bottom: 8px; }
+select.setting-input { width: 100%; padding: 10px 14px; background: var(--bg-btn); border: 1px solid var(--border); border-radius: var(--radius-sm); color: var(--text); font-family: 'DM Sans', sans-serif; font-size: 0.8rem; cursor: pointer; appearance: none; background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 24 24' fill='none' stroke='%238a7e6e' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 12px center; background-size: 16px; transition: border-color 0.2s ease; }
+select.setting-input:focus { outline: none; border-color: var(--accent-dim); }
+.setting-range-wrap { display: flex; align-items: center; gap: 12px; }
+.setting-range { flex: 1; -webkit-appearance: none; appearance: none; height: 4px; border-radius: 2px; background: var(--border); outline: none; }
+.setting-range::-webkit-slider-thumb { -webkit-appearance: none; width: 16px; height: 16px; border-radius: 50%; background: var(--accent); cursor: pointer; transition: transform 0.15s ease; }
+.setting-range::-webkit-slider-thumb:hover { transform: scale(1.2); }
+.setting-range-val { font-size: 0.8rem; color: var(--text-dim); min-width: 32px; text-align: right; font-family: 'Fraunces', serif; }
+textarea.setting-input { width: 100%; padding: 10px 14px; background: var(--bg-btn); border: 1px solid var(--border); border-radius: var(--radius-sm); color: var(--text); font-family: 'DM Sans', sans-serif; font-size: 0.78rem; resize: vertical; min-height: 80px; transition: border-color 0.2s ease; }
+textarea.setting-input:focus { outline: none; border-color: var(--accent-dim); }
+.bell-presets { display: flex; gap: 8px; }
+.bell-preset { flex: 1; padding: 10px; border-radius: var(--radius-sm); border: 1px solid var(--border); background: var(--bg-btn); color: var(--text-dim); cursor: pointer; font-family: 'DM Sans', sans-serif; font-size: 0.72rem; text-align: center; transition: all 0.2s ease; }
+.bell-preset:hover { border-color: var(--text-dim); color: var(--text); }
+.bell-preset.active { border-color: var(--accent-dim); color: var(--accent); background: rgba(212, 163, 83, 0.08); }
+.modal-footer { display: flex; justify-content: flex-end; gap: 12px; margin-top: 28px; padding-top: 20px; border-top: 1px solid var(--border); }
+.btn-save { padding: 10px 28px; background: var(--accent); color: #1a1612; border: none; border-radius: var(--radius-full); font-family: 'DM Sans', sans-serif; font-size: 0.78rem; font-weight: 500; letter-spacing: 0.06em; text-transform: uppercase; cursor: pointer; transition: background 0.2s ease, transform 0.15s ease; }
+.btn-save:hover { background: var(--accent-warm); }
+.btn-save:active { transform: scale(0.96); }
+.btn-cancel { padding: 10px 24px; background: transparent; color: var(--text-dim); border: 1px solid var(--border); border-radius: var(--radius-full); font-family: 'DM Sans', sans-serif; font-size: 0.78rem; cursor: pointer; transition: all 0.2s ease; }
+.btn-cancel:hover { color: var(--text); border-color: var(--text-dim); }
+.modal::-webkit-scrollbar { width: 4px; }
+.modal::-webkit-scrollbar-track { background: transparent; }
+.modal::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+.spinner { display: inline-block; width: 16px; height: 16px; border: 2px solid var(--border); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.7s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* Privacy Banner */
+.privacy-banner {
+  position: fixed; bottom: 0; left: 0; right: 0; z-index: 50;
+  background: rgba(26, 22, 18, 0.96); backdrop-filter: blur(12px);
+  border-top: 1px solid var(--border);
+  padding: 14px 24px; display: flex; align-items: center; justify-content: center; gap: 16px;
+  font-size: 0.72rem; color: var(--text-dim);
+  transform: translateY(100%); transition: transform 0.5s var(--ease-out);
+}
+.privacy-banner.show { transform: translateY(0); }
+.privacy-banner strong { color: var(--text); }
+.privacy-banner-btn {
+  padding: 6px 18px; border-radius: var(--radius-full);
+  border: 1px solid var(--accent-dim); background: transparent;
+  color: var(--accent); cursor: pointer; font-family: 'DM Sans', sans-serif;
+  font-size: 0.68rem; font-weight: 500; white-space: nowrap;
+  transition: all 0.2s ease;
+}
+.privacy-banner-btn:hover { background: rgba(212, 163, 83, 0.1); border-color: var(--accent); }
+
+/* Privacy / Terms Modal */
+.legal-modal .modal { max-width: 600px; max-height: 80vh; }
+.legal-content {
+  font-size: 0.78rem; color: var(--text-dim); line-height: 1.7;
+  max-height: 50vh; overflow-y: auto; padding-right: 8px;
+}
+.legal-content h2 { font-family: 'Fraunces', serif; font-size: 1rem; color: var(--text); margin: 20px 0 8px; font-weight: 400; }
+.legal-content h2:first-child { margin-top: 0; }
+.legal-content p { margin-bottom: 10px; }
+.legal-content ul { margin: 6px 0 12px 20px; }
+.legal-content li { margin-bottom: 4px; }
+.legal-content::-webkit-scrollbar { width: 3px; }
+.legal-content::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+/* Footer legal link */
+.legal-link {
+  background: none; border: none; cursor: pointer;
+  font-size: 0.6rem; color: var(--text-muted); font-family: 'DM Sans', sans-serif;
+  letter-spacing: 0.05em; transition: color 0.2s ease;
+  padding: 0; text-decoration: underline; text-underline-offset: 3px;
+  text-decoration-color: var(--border);
+}
+.legal-link:hover { color: var(--text-dim); text-decoration-color: var(--text-dim); }
+
+/* Music Player */
+.music-player {
+  display: flex; align-items: center; gap: 12px;
+  background: var(--bg-card); border: 1px solid var(--border);
+  border-radius: var(--radius-full); padding: 6px 8px 6px 12px;
+  opacity: 0; animation: slide-up 0.6s 0.95s var(--ease-out) both;
+  min-width: 240px; max-width: 340px;
+}
+.music-btn { width: 32px; height: 32px; flex-shrink: 0; }
+.music-btn svg { width: 14px; height: 14px; }
+.music-info { flex: 1; min-width: 0; cursor: pointer; }
+.music-track {
+  font-size: 0.6rem; color: var(--text-dim); white-space: nowrap;
+  overflow: hidden; text-overflow: ellipsis; letter-spacing: 0.05em;
+  margin-bottom: 4px; transition: color 0.2s ease;
+}
+.music-info:hover .music-track { color: var(--text); }
+.music-progress-wrap {
+  width: 100%; height: 3px; background: var(--border);
+  border-radius: 2px; overflow: hidden;
+}
+.music-progress {
+  height: 100%; width: 0%; background: var(--accent);
+  border-radius: 2px; transition: width 0.3s linear;
+}
+.music-icon.playing { color: var(--accent); }
+
+.volume-wrap { display: flex; align-items: center; gap: 4px; position: relative; }
+.volume-slider {
+  width: 0; opacity: 0; overflow: hidden;
+  -webkit-appearance: none; appearance: none; height: 4px; border-radius: 2px;
+  background: var(--border); outline: none; cursor: pointer;
+  transition: width 0.25s ease, opacity 0.25s ease, margin 0.25s ease;
+}
+.volume-wrap:hover .volume-slider,
+.volume-slider.dragging {
+  width: 56px; opacity: 1; margin-right: 4px;
+}
+.volume-slider::-webkit-slider-thumb {
+  -webkit-appearance: none; width: 10px; height: 10px; border-radius: 50%;
+  background: var(--accent); cursor: pointer;
+}
+.volume-slider::-moz-range-thumb { width: 10px; height: 10px; border-radius: 50%; background: var(--accent); border: none; cursor: pointer; }
+.volume-icon.muted { opacity: 0.4; }
+.volume-icon.muted .vol-wave { display: none; }
+
+@media (max-width: 480px) {
+  .clock { width: 280px; height: 280px; }
+  .clock-time { font-size: 4rem; }
+  .container { gap: 26px; }
+  .btn-primary { padding: 14px 32px; font-size: 0.78rem; min-width: 130px; }
+  .avatar-icon { width: 56px; height: 56px; }
+  .avatar-wrap { height: 64px; }
+  .modal { padding: 24px; width: 92vw; }
+  .cam-preview { width: 80px; height: 60px; bottom: 12px; right: 12px; }
+}
+</style>
+</head>
+<body>
+<!-- Privacy Banner (first visit) -->
+<div class="privacy-banner" id="privacyBanner">
+  <span>This site uses your camera <strong>locally</strong> for face detection. No data is sent anywhere.</span>
+  <button class="privacy-banner-btn" id="privacyBannerBtn">Got it</button>
+</div>
+
+<!-- Settings Gear -->
+<button class="settings-gear" id="settingsBtn" aria-label="Settings">
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+    <circle cx="12" cy="12" r="3"/>
+    <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+  </svg>
+</button>
+
+<div class="container">
+  <!-- Mode Badge -->
+  <div class="mode-badge focus" id="modeBadge">Focus</div>
+
+  <!-- Avatar -->
+  <div class="avatar-wrap">
+    <div>
+      <div class="avatar-icon" id="avatarIcon"><svg viewBox="0 0 72 72" xmlns="http://www.w3.org/2000/svg"><circle cx="36" cy="38" r="26" fill="currentColor" opacity="0.08"/><circle cx="36" cy="38" r="24" fill="currentColor" opacity="0.05"/><circle cx="27" cy="33" r="3.5" fill="currentColor"/><circle cx="45" cy="33" r="3.5" fill="currentColor"/><path d="M26 43 Q36 51 46 43 Q36 47.5 26 43Z" fill="currentColor"/></svg></div>
+      <div class="avatar-label" id="avatarLabel">focused</div>
+    </div>
+  </div>
+
+  <!-- Clock -->
+  <div class="clock" id="clock">
+    <svg class="tick-marks" viewBox="0 0 300 300" id="tickMarks"></svg>
+    <svg class="clock-ring-svg" viewBox="0 0 300 300">
+      <circle class="clock-ring-bg" cx="150" cy="150" r="140"/>
+      <circle class="clock-ring-progress" id="ringProgress" cx="150" cy="150" r="140" stroke-dasharray="879.65" stroke-dashoffset="0"/>
+    </svg>
+    <div class="clock-face">
+      <div class="clock-time" id="timeDisplay">25:00</div>
+      <div class="clock-label" id="clockLabel">time remaining</div>
+    </div>
+  </div>
+
+  <!-- Attention Status -->
+  <div class="attention-status disabled" id="attentionStatus">
+    <span class="dot"></span>
+    <span id="statusText">Camera off</span>
+  </div>
+
+  <!-- Controls -->
+  <div class="controls">
+    <button class="btn btn-primary" id="startBtn">Start</button>
+    <button class="btn btn-icon" id="resetBtn" aria-label="Reset">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+        <polyline points="1 4 1 10 7 10"/>
+        <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/>
+      </svg>
+    </button>
+    <button class="btn btn-icon btn-cam" id="camBtn" aria-label="Camera">
+      <span class="cam-dot"></span>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M23 7l-7 5 7 5V7z"/>
+        <rect x="1" y="5" width="15" height="14" rx="2" ry="2"/>
+      </svg>
+    </button>
+  </div>
+
+  <!-- Music Player -->
+  <div class="music-player" id="musicPlayer">
+    <button class="btn btn-icon music-btn" id="musicToggle" aria-label="Toggle music">
+      <svg class="music-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M9 18V5l12-2v13"/>
+        <circle cx="6" cy="18" r="3"/>
+        <circle cx="18" cy="16" r="3"/>
+      </svg>
+    </button>
+    <div class="music-info" id="musicInfo">
+      <div class="music-track" id="musicTrack">No music</div>
+      <div class="music-progress-wrap">
+        <div class="music-progress" id="musicProgress"></div>
+      </div>
+    </div>
+    <button class="btn btn-icon music-btn" id="musicNext" aria-label="Next track">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+        <polygon points="5 4 15 12 5 20 5 4"/>
+        <line x1="19" y1="5" x2="19" y2="19"/>
+      </svg>
+    </button>
+    <div class="volume-wrap">
+      <button class="btn btn-icon music-btn" id="volumeBtn" aria-label="Volume">
+        <svg class="volume-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+          <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/>
+          <path class="vol-wave" d="M15.54 8.46a5 5 0 0 1 0 7.07"/>
+          <path class="vol-wave" d="M19.07 4.93a10 10 0 0 1 0 14.14"/>
+        </svg>
+      </button>
+      <input type="range" class="volume-slider" id="volumeSlider" min="0" max="1" step="0.05" value="0.6">
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <div class="footer">
+    <div class="session-counter">Session <span id="sessionCount">1</span> of 4</div>
+    <div class="mode-pills">
+      <button class="pill active" data-mode="focus">Focus</button>
+      <button class="pill" data-mode="shortBreak">Short</button>
+      <button class="pill" data-mode="longBreak">Long</button>
+    </div>
+    <button class="legal-link" id="legalBtn">Terms &amp; Privacy</button>
+  </div>
+</div>
+
+<!-- Hidden Audio Element -->
+<audio id="bgAudio" preload="auto"></audio>
+
+<!-- Camera Preview -->
+<div class="cam-preview" id="camPreview">
+  <video id="camVideo" autoplay playsinline muted></video>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast">
+  <span class="toast-icon" id="toastIcon">&#x1F440;</span>
+  <div class="toast-msg" id="toastMsg">Stay <span class="highlight">focused</span>!</div>
+</div>
+
+<!-- Legal Modal -->
+<div class="modal-overlay legal-modal" id="legalOverlay">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">Terms &amp; Privacy</div>
+      <button class="modal-close" id="legalClose" aria-label="Close">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+    <div class="legal-content">
+      <h2>Privacy Policy</h2>
+      <p>Your privacy matters. Here is exactly how Pomodorw handles your data:</p>
+      <ul>
+        <li><strong>Camera access</strong> — Used only for real-time face detection to track focus. Video is processed <em>entirely on your device</em>. No frames, images, or video are ever transmitted, uploaded, or stored anywhere.</li>
+        <li><strong>Face data</strong> — All face detection runs locally in your browser using AI models loaded from a CDN. No facial data, landmarks, or expressions leave your computer.</li>
+        <li><strong>Local storage</strong> — We use <code>localStorage</code> only to remember your settings (bell tone, voice preference, custom phrases, alert sensitivity). No cookies, no tracking, no analytics.</li>
+        <li><strong>Third-party services</strong> — Google Fonts (typefaces) and jsDelivr CDN (face detection models) may collect standard server logs (IP address, browser type) when resources are fetched. These are outside our control.</li>
+        <li><strong>No accounts</strong> — No sign-up, no login, no user profile. There is nothing to identify you.</li>
+      </ul>
+      <h2>Terms of Use</h2>
+      <p>By using Pomodorw you agree to the following:</p>
+      <ul>
+        <li>You use the camera feature voluntarily. You can disable it at any time via the camera button.</li>
+        <li>This tool is provided "as is" without warranty. It is a productivity aid, not a medical or diagnostic device.</li>
+        <li>We are not responsible for any loss of productivity, data, or focus. The timer and alerts are purely advisory.</li>
+        <li>We reserve the right to update these terms. Continued use after changes constitutes acceptance.</li>
+      </ul>
+      <h2>Contact</h2>
+      <p>For questions about privacy or terms, please open an issue on the project repository.</p>
+      <p style="margin-top:16px;font-size:0.65rem;color:var(--text-muted);">Last updated: June 2026</p>
+    </div>
+  </div>
+</div>
+
+<!-- Settings Modal -->
+<div class="modal-overlay" id="settingsOverlay">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">Settings</div>
+      <button class="modal-close" id="settingsClose" aria-label="Close">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+        </svg>
+      </button>
+    </div>
+
+    <div class="setting-group">
+      <span class="setting-label">Alert Bell</span>
+      <span class="setting-desc">Choose the tone for distraction alerts</span>
+      <div class="bell-presets">
+        <button class="bell-preset active" data-bell="soft">Soft</button>
+        <button class="bell-preset" data-bell="sharp">Sharp</button>
+        <button class="bell-preset" data-bell="wooden">Wooden</button>
+      </div>
+      <div class="setting-range-wrap" style="margin-top:10px">
+        <span class="setting-label" style="margin:0;font-size:0.6rem;">Pitch</span>
+        <input type="range" class="setting-range" id="bellPitch" min="0.3" max="1.5" step="0.1" value="0.8">
+        <span class="setting-range-val" id="bellPitchVal">0.8</span>
+      </div>
+    </div>
+
+    <div class="setting-group">
+      <span class="setting-label">Motivation Voice</span>
+      <span class="setting-desc">Voice for spoken encouragement when distracted</span>
+      <select class="setting-input" id="ttsVoice"><option value="">Default voice</option></select>
+    </div>
+
+    <div class="setting-group">
+      <span class="setting-label">Speech Speed</span>
+      <div class="setting-range-wrap">
+        <input type="range" class="setting-range" id="ttsRate" min="0.5" max="1.8" step="0.1" value="1.0">
+        <span class="setting-range-val" id="ttsRateVal">1.0</span>
+      </div>
+    </div>
+
+    <div class="setting-group">
+      <span class="setting-label">Alert Sensitivity</span>
+      <span class="setting-desc">How long without focus before alert triggers</span>
+      <div class="setting-range-wrap">
+        <input type="range" class="setting-range" id="sensitivity" min="2" max="12" step="1" value="5">
+        <span class="setting-range-val" id="sensitivityVal">5s</span>
+      </div>
+    </div>
+
+    <div class="setting-group">
+      <span class="setting-label">Motivational Phrases</span>
+      <span class="setting-desc">One per line. Randomly spoken when distracted.</span>
+      <textarea class="setting-input" id="phrasesInput" rows="5">Eyes on the screen, keep going!
+Hey, stay with the task!
+You can do this, stay focused.
+Don't break your flow. Come back.
+Deep breath. Now get back to work.
+The clock is ticking. Focus!
+One step at a time. You've got this.
+Reset your attention. Right now.</textarea>
+    </div>
+
+    <div class="setting-group">
+      <span class="setting-label">Extras</span>
+      <div style="display:flex;flex-direction:column;gap:8px;">
+        <label style="display:flex;align-items:center;gap:10px;cursor:pointer;font-size:0.8rem;color:var(--text-dim);">
+          <input type="checkbox" id="avatarToggle" checked style="accent-color:var(--accent);width:16px;height:16px;"> Show avatar icon
+        </label>
+        <label style="display:flex;align-items:center;gap:10px;cursor:pointer;font-size:0.8rem;color:var(--text-dim);">
+          <input type="checkbox" id="ttsToggle" checked style="accent-color:var(--accent);width:16px;height:16px;"> Voice alerts on distraction
+        </label>
+        <label style="display:flex;align-items:center;gap:10px;cursor:pointer;font-size:0.8rem;color:var(--text-dim);">
+          <input type="checkbox" id="bellToggle" checked style="accent-color:var(--accent);width:16px;height:16px;"> Bell sound on distraction
+        </label>
+      </div>
+    </div>
+
+    <div class="modal-footer">
+      <button class="btn-cancel" id="settingsCancel">Cancel</button>
+      <button class="btn-save" id="settingsSave">Save</button>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@vladmandic/face-api@latest/dist/face-api.js"></script>
+<script>
+(function() {
+  'use strict';
+  var FOCUS = 25 * 60;
+  var SHORT_BREAK = 5 * 60;
+  var LONG_BREAK = 15 * 60;
+  var CIRCUMFERENCE = 2 * Math.PI * 140;
+  var SETTINGS_KEY = 'pomodorw-settings';
+  var DURATIONS = { focus: FOCUS, shortBreak: SHORT_BREAK, longBreak: LONG_BREAK };
+  var MODE_LABELS = { focus: 'Focus', shortBreak: 'Short Break', longBreak: 'Long Break' };
+
+  var AVATAR_SVGS = {
+    focused: '<svg viewBox="0 0 72 72"><circle cx="36" cy="38" r="26" fill="currentColor" opacity="0.10"/><circle cx="36" cy="38" r="24" fill="currentColor" opacity="0.06"/><circle cx="27" cy="33" r="3.5" fill="currentColor"/><circle cx="45" cy="33" r="3.5" fill="currentColor"/><path d="M26 43 Q36 51 46 43 Q36 47.5 26 43Z" fill="currentColor"/></svg>',
+    working: '<svg viewBox="0 0 72 72"><circle cx="36" cy="38" r="26" fill="currentColor" opacity="0.10"/><circle cx="36" cy="38" r="24" fill="currentColor" opacity="0.06"/><circle cx="27" cy="32" r="3" fill="currentColor"/><circle cx="45" cy="32" r="3" fill="currentColor"/><path d="M20 26 L28 28.5 L28 26Z" fill="currentColor"/><path d="M52 26 L44 28.5 L44 26Z" fill="currentColor"/><rect x="28" y="44" width="16" height="3.5" rx="1.75" fill="currentColor"/></svg>',
+    distracted: '<svg viewBox="0 0 72 72"><circle cx="36" cy="38" r="26" fill="currentColor" opacity="0.10"/><circle cx="36" cy="38" r="24" fill="currentColor" opacity="0.06"/><circle cx="27" cy="34" r="2.8" fill="currentColor"/><circle cx="45" cy="34" r="2.8" fill="currentColor"/><path d="M20 28 L28 26 L28 28Z" fill="currentColor"/><path d="M52 28 L44 26 L44 28Z" fill="currentColor"/><path d="M27 49 Q36 43 45 49 Q36 46.5 27 49Z" fill="currentColor"/></svg>',
+    away: '<svg viewBox="0 0 72 72"><circle cx="36" cy="38" r="26" fill="currentColor" opacity="0.10"/><circle cx="36" cy="38" r="24" fill="currentColor" opacity="0.06"/><rect x="23" y="32" width="10" height="3" rx="1.5" fill="currentColor"/><rect x="39" y="32" width="10" height="3" rx="1.5" fill="currentColor"/><circle cx="36" cy="46" r="3" fill="currentColor"/><text x="49" y="22" font-size="11" font-family="DM Sans" fill="currentColor" font-weight="500">Z</text><text x="56" y="16" font-size="8" fill="currentColor" opacity="0.5" font-family="DM Sans" font-weight="500">z</text></svg>',
+    returned: '<svg viewBox="0 0 72 72"><circle cx="36" cy="38" r="26" fill="currentColor" opacity="0.10"/><circle cx="36" cy="38" r="24" fill="currentColor" opacity="0.06"/><circle cx="27" cy="33" r="3.5" fill="currentColor"/><circle cx="45" cy="33" r="3.5" fill="currentColor"/><path d="M24 43 Q36 54 48 43 Q36 48 24 43Z" fill="currentColor"/><circle cx="22" cy="41" r="4.5" fill="currentColor" opacity="0.12"/><circle cx="50" cy="41" r="4.5" fill="currentColor" opacity="0.12"/></svg>',
+    break: '<svg viewBox="0 0 72 72"><circle cx="36" cy="38" r="26" fill="currentColor" opacity="0.10"/><circle cx="36" cy="38" r="24" fill="currentColor" opacity="0.06"/><polygon points="27,28 28.5,31.5 32.5,31.5 29.5,34 30.5,38 27,35.5 23.5,38 24.5,34 21.5,31.5 25.5,31.5" fill="currentColor"/><polygon points="45,28 46.5,31.5 50.5,31.5 47.5,34 48.5,38 45,35.5 41.5,38 42.5,34 39.5,31.5 43.5,31.5" fill="currentColor"/><ellipse cx="36" cy="46" rx="8" ry="6" fill="currentColor"/><circle cx="17" cy="24" r="2.5" fill="currentColor" opacity="0.35"/><circle cx="55" cy="20" r="2.5" fill="currentColor" opacity="0.3"/><circle cx="15" cy="48" r="2" fill="currentColor" opacity="0.3"/><circle cx="57" cy="46" r="2" fill="currentColor" opacity="0.35"/></svg>',
+    complete: '<svg viewBox="0 0 72 72"><polygon points="36,8 40,27 59,27 44,39 49,59 36,48 23,59 28,39 13,27 32,27" fill="currentColor"/></svg>',
+    neutral: '<svg viewBox="0 0 72 72"><circle cx="36" cy="38" r="26" fill="currentColor" opacity="0.10"/><circle cx="36" cy="38" r="24" fill="currentColor" opacity="0.06"/><circle cx="27" cy="33" r="3.5" fill="currentColor"/><circle cx="45" cy="33" r="3.5" fill="currentColor"/><rect x="27" y="44" width="18" height="3" rx="1.5" fill="currentColor"/></svg>'
+  };
+  var AVATAR_LABELS = { focused: 'focused', working: 'going strong', distracted: 'distracted', away: 'away', returned: 'welcome back', break: 'fun time', complete: 'session done', neutral: 'waiting...' };
+
+  var $ = function(id) { return document.getElementById(id); };
+  var timeDisplay = $('timeDisplay');
+  var ringProgress = $('ringProgress');
+  var startBtn = $('startBtn');
+  var resetBtn = $('resetBtn');
+  var camBtn = $('camBtn');
+  var modeBadge = $('modeBadge');
+  var sessionCount = $('sessionCount');
+  var modePills = document.querySelectorAll('.pill');
+  var avatarIcon = $('avatarIcon');
+  var avatarLabel = $('avatarLabel');
+  var attentionStatus = $('attentionStatus');
+  var statusText = $('statusText');
+  var camPreview = $('camPreview');
+  var camVideo = $('camVideo');
+  var toast = $('toast');
+  var toastIcon = $('toastIcon');
+  var toastMsg = $('toastMsg');
+  var settingsBtn = $('settingsBtn');
+  var settingsOverlay = $('settingsOverlay');
+  var settingsClose = $('settingsClose');
+  var settingsCancel = $('settingsCancel');
+  var settingsSave = $('settingsSave');
+  var ttsVoiceSelect = $('ttsVoice');
+  var ttsRateRange = $('ttsRate');
+  var ttsRateVal = $('ttsRateVal');
+  var bellPitchRange = $('bellPitch');
+  var bellPitchVal = $('bellPitchVal');
+  var sensitivityRange = $('sensitivity');
+  var sensitivityVal = $('sensitivityVal');
+  var phrasesInput = $('phrasesInput');
+  var avatarToggle = $('avatarToggle');
+  var ttsToggle = $('ttsToggle');
+  var bellToggle = $('bellToggle');
+  var bellPresets = document.querySelectorAll('.bell-preset');
+
+  var state = { mode: 'focus', status: 'idle', timeLeft: FOCUS, totalTime: FOCUS, sessionNum: 1, timerId: null };
+  var attention = { running: false, faceDetected: false, headYaw: 0, focused: true, noFaceTime: 0, distractionTime: 0, alertTriggered: false, returnTriggered: false, faceDetector: null, videoStream: null, animFrameId: null, lastAvatar: 'neutral', lastAttentionState: 'disabled', sensitivity: 5, modelsLoaded: false, lastExpressions: null };
+
+  var settings = { bellTone: 'soft', bellPitch: 0.8, ttsVoiceURI: '', ttsRate: 1.0, sensitivity: 5, phrases: ['Eyes on the screen, keep going!','Hey, stay with the task!','You can do this, stay focused.',"Don't break your flow. Come back.",'Deep breath. Now get back to work.','The clock is ticking. Focus!',"One step at a time. You've got this.",'Reset your attention. Right now.'], avatarOn: true, ttsOn: true, bellOn: true };
+
+  function loadSettings() { try { var s = localStorage.getItem(SETTINGS_KEY); if (s) { var p = JSON.parse(s); Object.assign(settings, p); } } catch(e) {} }
+  function saveSettings() { try { localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings)); } catch(e) {} }
+
+  function applySettingsToUI() {
+    bellPresets.forEach(function(p) { p.classList.toggle('active', p.dataset.bell === settings.bellTone); });
+    bellPitchRange.value = settings.bellPitch; bellPitchVal.textContent = settings.bellPitch;
+    ttsRateRange.value = settings.ttsRate; ttsRateVal.textContent = settings.ttsRate.toFixed(1);
+    sensitivityRange.value = settings.sensitivity; sensitivityVal.textContent = settings.sensitivity + 's';
+    attention.sensitivity = settings.sensitivity;
+    phrasesInput.value = settings.phrases.join('\n');
+    avatarToggle.checked = settings.avatarOn; ttsToggle.checked = settings.ttsOn; bellToggle.checked = settings.bellOn;
+    if (ttsVoiceSelect.options.length > 1) {
+      var found = false;
+      for (var i = 0; i < ttsVoiceSelect.options.length; i++) { if (ttsVoiceSelect.options[i].value === settings.ttsVoiceURI) { ttsVoiceSelect.selectedIndex = i; found = true; break; } }
+      if (!found && settings.ttsVoiceURI) { for (var j = 0; j < ttsVoiceSelect.options.length; j++) { if (ttsVoiceSelect.options[j].textContent.indexOf(settings.ttsVoiceURI) >= 0) { ttsVoiceSelect.selectedIndex = j; break; } } }
+    }
+  }
+
+  function gatherSettingsFromUI() {
+    settings.bellTone = document.querySelector('.bell-preset.active').dataset.bell;
+    settings.bellPitch = parseFloat(bellPitchRange.value);
+    settings.ttsVoiceURI = ttsVoiceSelect.value;
+    settings.ttsRate = parseFloat(ttsRateRange.value);
+    settings.sensitivity = parseInt(sensitivityRange.value, 10);
+    settings.phrases = phrasesInput.value.split('\n').filter(function(l) { return l.trim(); });
+    settings.avatarOn = avatarToggle.checked; settings.ttsOn = ttsToggle.checked; settings.bellOn = bellToggle.checked;
+    attention.sensitivity = settings.sensitivity;
+  }
+
+  (function buildTicks() {
+    var svg = $('tickMarks');
+    var cx = 150, cy = 150, r = 142, markup = '';
+    for (var i = 0; i < 60; i++) {
+      var angle = (i / 60) * 360;
+      var rad = (angle - 90) * Math.PI / 180;
+      var isMajor = i % 5 === 0;
+      var innerR = isMajor ? r - 9 : r - 5;
+      var x1 = cx + innerR * Math.cos(rad), y1 = cy + innerR * Math.sin(rad);
+      var x2 = cx + r * Math.cos(rad), y2 = cy + r * Math.sin(rad);
+      markup += '<line class="tick' + (isMajor ? ' major' : '') + '" x1="' + x1.toFixed(1) + '" y1="' + y1.toFixed(1) + '" x2="' + x2.toFixed(1) + '" y2="' + y2.toFixed(1) + '"/>';
+    }
+    svg.innerHTML = markup;
+  })();
+
+  function formatTime(secs) { var m = Math.floor(secs / 60), s = secs % 60; return String(m).padStart(2, '0') + ':' + String(s).padStart(2, '0'); }
+
+  function updateDisplay() {
+    timeDisplay.textContent = formatTime(state.timeLeft);
+    var progress = 1 - (state.timeLeft / state.totalTime);
+    ringProgress.setAttribute('stroke-dashoffset', (CIRCUMFERENCE * progress).toFixed(2));
+    var isBreak = state.mode !== 'focus';
+    timeDisplay.classList.toggle('break-time', isBreak);
+    modeBadge.classList.toggle('focus', !isBreak);
+    modeBadge.classList.toggle('break', isBreak);
+    modeBadge.textContent = MODE_LABELS[state.mode];
+  }
+
+  function setMode(mode) {
+    if (state.timerId) { clearInterval(state.timerId); state.timerId = null; }
+    state.mode = mode; state.totalTime = DURATIONS[mode]; state.timeLeft = DURATIONS[mode]; state.status = 'idle';
+    modeBadge.classList.add('switching');
+    setTimeout(function() { updateDisplay(); modeBadge.classList.remove('switching'); }, 50);
+    modePills.forEach(function(p) { var a = p.dataset.mode === mode; p.classList.toggle('active', a); p.classList.toggle('active-break', a && mode !== 'focus'); });
+    startBtn.textContent = 'Start'; startBtn.classList.remove('running');
+    setAvatar(mode === 'focus' ? 'focused' : 'break');
+    updateDisplay();
+  }
+
+  function tick() {
+    state.timeLeft--; updateDisplay();
+    if (state.timeLeft <= 0) {
+      clearInterval(state.timerId); state.timerId = null; state.status = 'idle';
+      startBtn.textContent = 'Start'; startBtn.classList.remove('running');
+      timeDisplay.textContent = '00:00';
+      ringProgress.classList.add('pulse'); setTimeout(function() { ringProgress.classList.remove('pulse'); }, 1400);
+      playChime(); setAvatar('complete'); advanceSession();
+    }
+  }
+
+  function advanceSession() {
+    if (state.mode === 'focus') {
+      if (state.sessionNum % 4 === 0) setMode('longBreak'); else setMode('shortBreak');
+      state.sessionNum++; sessionCount.textContent = Math.min(state.sessionNum, 4);
+    } else setMode('focus');
+  }
+  function toggleTimer() {
+    if (state.status === 'idle') {
+      state.status = 'running'; startBtn.textContent = 'Pause'; startBtn.classList.add('running');
+      ringProgress.classList.remove('paused');
+      state.timerId = setInterval(tick, 1000);
+      setAvatar('focused');
+    } else if (state.status === 'running') {
+      clearInterval(state.timerId); state.timerId = null;
+      state.status = 'paused'; startBtn.textContent = 'Resume';
+    } else if (state.status === 'paused') {
+      state.status = 'running'; startBtn.textContent = 'Pause';
+      state.timerId = setInterval(tick, 1000);
+    }
+  }
+
+  function resetTimer() {
+    if (state.timerId) { clearInterval(state.timerId); state.timerId = null; }
+    state.status = 'idle'; state.timeLeft = DURATIONS[state.mode]; state.totalTime = DURATIONS[state.mode];
+    startBtn.textContent = 'Start'; startBtn.classList.remove('running');
+    ringProgress.classList.remove('paused'); updateDisplay();
+  }
+
+  function getBellFreqs(tone) {
+    if (tone === 'sharp') return { base: 880, type: 'square', harmonics: [1, 3] };
+    if (tone === 'wooden') return { base: 330, type: 'triangle', harmonics: [1, 2.5, 4.2] };
+    return { base: 440, type: 'sine', harmonics: [1, 2] };
+  }
+
+  function playBell() {
+    try {
+      var ctx = new (window.AudioContext || window.webkitAudioContext)();
+      var now = ctx.currentTime, tone = settings.bellTone || 'soft', pitch = settings.bellPitch || 0.8, cfg = getBellFreqs(tone), base = cfg.base * pitch;
+      cfg.harmonics.forEach(function(h, i) {
+        var osc = ctx.createOscillator(), gain = ctx.createGain();
+        osc.type = cfg.type; osc.frequency.value = base * h;
+        var vol = i === 0 ? 0.25 : 0.1 / (i + 1);
+        gain.gain.setValueAtTime(vol, now); gain.gain.exponentialRampToValueAtTime(0.001, now + 0.6 + i * 0.15);
+        osc.connect(gain); gain.connect(ctx.destination);
+        osc.start(now); osc.stop(now + 1);
+      });
+    } catch(e) {}
+  }
+
+  function playChime() {
+    try {
+      var ctx = new (window.AudioContext || window.webkitAudioContext)(), now = ctx.currentTime, bf = 528;
+      var o1 = ctx.createOscillator(), g1 = ctx.createGain();
+      o1.type = 'sine'; o1.frequency.value = bf;
+      g1.gain.setValueAtTime(0.25, now); g1.gain.exponentialRampToValueAtTime(0.001, now + 1.8);
+      o1.connect(g1); g1.connect(ctx.destination); o1.start(now); o1.stop(now + 1.8);
+      var o2 = ctx.createOscillator(), g2 = ctx.createGain();
+      o2.type = 'sine'; o2.frequency.value = bf * 2;
+      g2.gain.setValueAtTime(0.1, now); g2.gain.exponentialRampToValueAtTime(0.001, now + 1.4);
+      o2.connect(g2); g2.connect(ctx.destination); o2.start(now); o2.stop(now + 1.4);
+    } catch(e) {}
+  }
+
+  function speak(text) {
+    if (!settings.ttsOn) return;
+    try {
+      window.speechSynthesis.cancel();
+      var utter = new SpeechSynthesisUtterance(text); utter.rate = settings.ttsRate;
+      if (settings.ttsVoiceURI) {
+        var voices = window.speechSynthesis.getVoices();
+        for (var i = 0; i < voices.length; i++) { if (voices[i].voiceURI === settings.ttsVoiceURI || voices[i].name === settings.ttsVoiceURI) { utter.voice = voices[i]; break; } }
+      }
+      window.speechSynthesis.speak(utter);
+    } catch(e) {}
+  }
+
+  function getRandomPhrase() { var p = settings.phrases; return (p && p.length) ? p[Math.floor(Math.random() * p.length)] : 'Stay focused!'; }
+
+  function populateVoices() {
+    var voices = window.speechSynthesis.getVoices();
+    ttsVoiceSelect.innerHTML = '<option value="">Default voice</option>';
+    var seen = {};
+    voices.forEach(function(v) { if (!seen[v.voiceURI]) { seen[v.voiceURI] = true; var opt = document.createElement('option'); opt.value = v.voiceURI; opt.textContent = v.name + ' (' + v.lang + ')'; ttsVoiceSelect.appendChild(opt); } });
+    if (settings.ttsVoiceURI) { for (var i = 0; i < ttsVoiceSelect.options.length; i++) { if (ttsVoiceSelect.options[i].value === settings.ttsVoiceURI) { ttsVoiceSelect.selectedIndex = i; break; } } }
+  }
+  if (window.speechSynthesis) { window.speechSynthesis.onvoiceschanged = populateVoices; setTimeout(populateVoices, 500); }
+
+  function setAvatar(key) {
+    if (!settings.avatarOn) { avatarIcon.style.opacity = '0'; avatarLabel.style.opacity = '0'; return; }
+    avatarIcon.style.opacity = '1'; avatarLabel.style.opacity = '1';
+    var svg = AVATAR_SVGS[key] || AVATAR_SVGS.neutral;
+    if (key === attention.lastAvatar && avatarIcon.innerHTML.length > 0) {
+      // Update label only if same icon
+      avatarLabel.textContent = AVATAR_LABELS[key] || '';
+      return;
+    }
+    attention.lastAvatar = key;
+    avatarIcon.innerHTML = svg; avatarLabel.textContent = AVATAR_LABELS[key] || '';
+    avatarIcon.classList.remove('pop', 'bounce');
+    void avatarIcon.offsetWidth;
+    if (key === 'returned' || key === 'complete') avatarIcon.classList.add('pop');
+    else if (key === 'focused' || key === 'break') avatarIcon.classList.add('bounce');
+    // Icon color for break mode
+    if (key === 'break') avatarIcon.style.color = 'var(--break-color)';
+    else avatarIcon.style.color = '';
+  }
+
+  var toastTimeout = null;
+  function showToast(icon, msg, cls) {
+    toastIcon.textContent = icon; toastMsg.innerHTML = msg; toast.className = 'toast';
+    if (cls) toast.classList.add(cls); toast.classList.add('show');
+    if (toastTimeout) clearTimeout(toastTimeout);
+    toastTimeout = setTimeout(function() { toast.classList.remove('show'); }, 4000);
+  }
+
+  async function loadFaceModels() {
+    if (typeof faceapi === 'undefined' || attention.modelsLoaded) return;
+    statusText.textContent = 'Loading AI models...';
+    try {
+      var MODEL_URL = 'https://cdn.jsdelivr.net/npm/@vladmandic/face-api@latest/model/';
+      await faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL);
+      await faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL);
+      await faceapi.nets.faceExpressionNet.loadFromUri(MODEL_URL);
+      attention.modelsLoaded = true;
+      if (attention.running) { statusText.textContent = 'Looking for face...'; }
+    } catch(e) {
+      attention.modelsLoaded = false;
+    }
+  }
+
+  async function startCamera() {
+    if (attention.videoStream) return;
+    try {
+      camBtn.classList.add('loading'); camBtn.classList.remove('active', 'error');
+
+      // Start camera FIRST (triggers permission prompt immediately)
+      statusText.textContent = 'Requesting camera...';
+      var stream = await navigator.mediaDevices.getUserMedia({ video: { width: 320, height: 240, facingMode: 'user' } });
+      attention.videoStream = stream; camVideo.srcObject = stream; await camVideo.play();
+      camPreview.classList.add('active'); camBtn.classList.remove('loading'); camBtn.classList.add('active');
+      attention.running = true;
+
+      // Fallback detector while models load
+      if (window.FaceDetector) {
+        try { attention.faceDetector = new FaceDetector({ maxDetectedFaces: 1, fastMode: true }); } catch(e) { attention.faceDetector = null; }
+      }
+
+      updateAttentionStatus('focused');
+      statusText.textContent = attention.modelsLoaded ? 'Looking for face...' : 'Loading AI models...';
+
+      // Start detection immediately (falls back to basic detector)
+      detectLoop();
+
+      // Load models in background (if not already loaded)
+      if (!attention.modelsLoaded) loadFaceModels();
+    } catch(e) {
+      camBtn.classList.remove('loading'); camBtn.classList.add('error');
+      updateAttentionStatus('disabled'); statusText.textContent = 'Camera denied';
+      showToast('\u{1F6AB}', 'Camera permission denied. Face tracking unavailable.', 'distract');
+    }
+  }
+
+  function stopCamera() {
+    attention.running = false;
+    if (attention.animFrameId) { cancelAnimationFrame(attention.animFrameId); attention.animFrameId = null; }
+    if (attention.videoStream) { attention.videoStream.getTracks().forEach(function(t) { t.stop(); }); attention.videoStream = null; }
+    camPreview.classList.remove('active'); camBtn.classList.remove('active', 'loading', 'error');
+    attention.faceDetected = false; attention.focused = true; attention.noFaceTime = 0; attention.distractionTime = 0;
+    attention.alertTriggered = false; attention.returnTriggered = false;
+    updateAttentionStatus('disabled'); statusText.textContent = 'Camera off';
+  }
+
+  function toggleCamera() { if (attention.running) stopCamera(); else startCamera(); }
+
+  function updateAttentionStatus(type) {
+    if (type === attention.lastAttentionState) return;
+    attention.lastAttentionState = type;
+    attentionStatus.className = 'attention-status';
+    if (type !== 'disabled') attentionStatus.classList.add(type); else attentionStatus.classList.add('disabled');
+  }
+
+  function getEyeYawFromLandmarks(pts) {
+    if (!pts || pts.length < 46) return 0;
+    var le = pts[36], re = pts[45], ns = pts[30];
+    if (!le || !re || !ns) return 0;
+    var eyeDist = Math.abs(le.x - re.x);
+    return eyeDist > 0 ? Math.min(90, Math.max(-90, (((ns.x - le.x) / eyeDist) - 0.5) * 90)) : 0;
+  }
+
+  function getDominantExpression(expressions) {
+    if (!expressions) return null;
+    var best = 'neutral', bestVal = 0;
+    for (var k in expressions) { if (expressions[k] > bestVal) { bestVal = expressions[k]; best = k; } }
+    return bestVal > 0.3 ? best : null;
+  }
+
+  async function detectLoop() {
+    if (!attention.running) return;
+    try {
+      var detected = false, yaw = 0, expressions = null;
+
+      if (camVideo.readyState >= 2) {
+        if (typeof faceapi !== 'undefined' && attention.modelsLoaded) {
+          var result = await faceapi
+            .detectSingleFace(camVideo, new faceapi.TinyFaceDetectorOptions({ inputSize: 160, scoreThreshold: 0.3 }))
+            .withFaceLandmarks()
+            .withFaceExpressions();
+          if (result) {
+            detected = true;
+            yaw = getEyeYawFromLandmarks(result.landmarks.positions);
+            expressions = result.expressions;
+            attention.lastExpressions = expressions;
+          }
+        } else if (attention.faceDetector) {
+          var faces = await attention.faceDetector.detect(camVideo);
+          if (faces && faces.length > 0) {
+            detected = true;
+            var face = faces[0], landmarks = face.landmarks;
+            if (landmarks) {
+              var leftEye = null, rightEye = null, nose = null;
+              for (var i = 0; i < landmarks.length; i++) {
+                var type = landmarks[i].type;
+                if (type === 'eye' && !leftEye) leftEye = landmarks[i];
+                else if (type === 'eye' && leftEye) rightEye = landmarks[i];
+                if (type === 'nose' && !nose) nose = landmarks[i];
+              }
+              if (leftEye && rightEye && nose) {
+                var le = leftEye.locations[0], re = rightEye.locations[0], ns = nose.locations[0];
+                if (le && re && ns) {
+                  var lex = le.x != null ? le.x : le[0], rex = re.x != null ? re.x : re[0], nsx = ns.x != null ? ns.x : ns[0];
+                  var eyeDist = Math.abs(lex - rex);
+                  yaw = eyeDist > 0 ? (((nsx - lex) / eyeDist) - 0.5) * 90 : 0;
+                }
+              }
+            }
+          }
+        } else { detected = true; }
+      }
+
+      var prevFocused = attention.focused;
+      attention.faceDetected = detected;
+
+      if (!detected) {
+        attention.noFaceTime++;
+        attention.headYaw = 0;
+        if (attention.noFaceTime > 3) { attention.focused = false; setAvatar('away'); statusText.textContent = 'No face detected'; updateAttentionStatus('away'); }
+        else { statusText.textContent = 'Detecting...'; }
+      } else {
+        attention.noFaceTime = 0; attention.headYaw = yaw;
+        var expr = getDominantExpression(expressions);
+
+        if (Math.abs(yaw) > 25) { attention.focused = false; setAvatar('distracted'); statusText.textContent = 'Looking away ' + Math.round(Math.abs(yaw)) + '\u00B0'; updateAttentionStatus('distracted'); }
+        else if (Math.abs(yaw) > 15) { attention.focused = true; setAvatar('working'); statusText.textContent = 'Focused (' + Math.round(Math.abs(yaw)) + '\u00B0)'; updateAttentionStatus('focused'); }
+        else {
+          attention.focused = true;
+          // Use expression to enhance avatar
+          if (state.status === 'running') {
+            if (expr === 'happy' || expr === 'surprised') setAvatar('focused');
+            else if (expr === 'angry' || expr === 'disgusted') setAvatar('working');
+            else setAvatar('focused');
+          } else setAvatar('neutral');
+          statusText.textContent = 'Focused' + (expr ? ' (' + expr + ')' : '');
+          updateAttentionStatus('focused');
+        }
+      }
+
+      if (attention.running && state.status === 'running') {
+        if (!attention.focused && !attention.alertTriggered) {
+          attention.distractionTime++;
+          if (attention.distractionTime >= settings.sensitivity) {
+            attention.alertTriggered = true; attention.returnTriggered = false;
+            if (settings.bellOn) playBell();
+            showToast('\u{26A0}\u{FE0F}', 'Hey! ' + getRandomPhrase(), 'distract');
+            speak(getRandomPhrase());
+          }
+        } else if (attention.focused && attention.alertTriggered && !attention.returnTriggered) {
+          attention.returnTriggered = true; attention.distractionTime = 0;
+          setAvatar('returned');
+          showToast('\u{1F44D}', 'You\'re back! Keep the flow going.', 'return');
+          setTimeout(function() { attention.alertTriggered = false; attention.returnTriggered = false; }, 3000);
+        } else if (attention.focused) {
+          attention.distractionTime = Math.max(0, attention.distractionTime - 0.5);
+          if (attention.distractionTime <= 0 && attention.alertTriggered && attention.returnTriggered) { attention.alertTriggered = false; attention.returnTriggered = false; }
+        }
+      } else {
+        attention.distractionTime = 0; attention.alertTriggered = false; attention.returnTriggered = false;
+      }
+    } catch(e) {}
+
+    attention.animFrameId = requestAnimationFrame(function() { setTimeout(detectLoop, 300); });
+  }
+
+  startBtn.addEventListener('click', toggleTimer);
+  resetBtn.addEventListener('click', resetTimer);
+  camBtn.addEventListener('click', toggleCamera);
+  modePills.forEach(function(pill) { pill.addEventListener('click', function() { if (state.timerId) { clearInterval(state.timerId); state.timerId = null; } setMode(pill.dataset.mode); }); });
+  document.addEventListener('keydown', function(e) { if (e.key === ' ' || e.key === 'Space') { e.preventDefault(); toggleTimer(); } if (e.key === 'r' || e.key === 'R') { resetTimer(); } });
+
+  settingsBtn.addEventListener('click', function() { applySettingsToUI(); settingsOverlay.classList.add('open'); });
+  function closeSettings() { settingsOverlay.classList.remove('open'); }
+  settingsClose.addEventListener('click', closeSettings);
+  settingsCancel.addEventListener('click', closeSettings);
+  settingsOverlay.addEventListener('click', function(e) { if (e.target === settingsOverlay) closeSettings(); });
+  settingsSave.addEventListener('click', function() {
+    gatherSettingsFromUI(); saveSettings();
+    if (!settings.avatarOn) { avatarIcon.style.opacity = '0'; avatarLabel.style.opacity = '0'; }
+    else { avatarIcon.style.opacity = '1'; avatarLabel.style.opacity = '1'; setAvatar(attention.lastAvatar === 'neutral' ? 'neutral' : attention.lastAvatar); }
+    closeSettings(); showToast('\u{2714}\u{FE0F}', 'Settings saved!', 'return');
+  });
+
+  bellPresets.forEach(function(p) { p.addEventListener('click', function() { bellPresets.forEach(function(b) { b.classList.remove('active'); }); p.classList.add('active'); settings.bellTone = p.dataset.bell; if (settings.bellOn !== false) playBell(); }); });
+  ttsRateRange.addEventListener('input', function() { ttsRateVal.textContent = parseFloat(this.value).toFixed(1); });
+  bellPitchRange.addEventListener('input', function() { bellPitchVal.textContent = parseFloat(this.value).toFixed(1); });
+  sensitivityRange.addEventListener('input', function() { sensitivityVal.textContent = parseInt(this.value, 10) + 's'; });
+
+  // Legal modal
+  var legalOverlay = $('legalOverlay');
+  var legalBtn = $('legalBtn');
+  var legalClose = $('legalClose');
+  legalBtn.addEventListener('click', function() { legalOverlay.classList.add('open'); });
+  legalClose.addEventListener('click', function() { legalOverlay.classList.remove('open'); });
+  legalOverlay.addEventListener('click', function(e) { if (e.target === legalOverlay) legalOverlay.classList.remove('open'); });
+
+  // Privacy banner (first visit)
+  var privacyBanner = $('privacyBanner');
+  var privacyBannerBtn = $('privacyBannerBtn');
+  if (!localStorage.getItem('pomodorw-privacy-seen')) {
+    setTimeout(function() { privacyBanner.classList.add('show'); }, 2000);
+  }
+  privacyBannerBtn.addEventListener('click', function() {
+    privacyBanner.classList.remove('show');
+    localStorage.setItem('pomodorw-privacy-seen', '1');
+  });
+
+  // ─── Music Player ──────────────────────────────────────────────
+  var PLAYLIST = [
+    'mustics/prettyjohn1-lofi-beats-533426.mp3',
+    'mustics/mondamusic-lofi-lofi-girl-lofi-chill-512853.mp3',
+    'mustics/prettyjohn1-lofi-lofi-music-533423.mp3',
+    'mustics/mirostar-lofi-beats-531504.mp3',
+    'mustics/mondamusic-lofi-lofi-music-lofi-chill-529558.mp3',
+    'mustics/mirostar-lofi-lofi-music-531487.mp3',
+    'mustics/solarflex-lofi-beats-541528.mp3',
+    'mustics/the_mountain-lofi-lofi-music-496553.mp3'
+  ];
+
+  var audio = $('bgAudio');
+  var musicToggle = $('musicToggle');
+  var musicNext = $('musicNext');
+  var musicTrack = $('musicTrack');
+  var musicProgress = $('musicProgress');
+  var musicIcon = document.querySelector('.music-icon');
+  var currentTrack = 0;
+  var musicPlaying = false;
+  var volumeBtn = $('volumeBtn');
+  var volumeSlider = $('volumeSlider');
+  var volumeIcon = document.querySelector('.volume-icon');
+  var prevVolume = 0.6;
+
+  function getTrackName(path) {
+    var name = path.split('/').pop().replace(/\.mp3$/i, '');
+    return name.replace(/[-_]/g, ' ').replace(/\b\w/g, function(c) { return c.toUpperCase(); });
+  }
+
+  function loadTrack(index) {
+    currentTrack = (index + PLAYLIST.length) % PLAYLIST.length;
+    audio.src = PLAYLIST[currentTrack];
+    musicTrack.textContent = getTrackName(PLAYLIST[currentTrack]);
+    musicProgress.style.width = '0%';
+    if (musicPlaying) audio.play();
+  }
+
+  function toggleMusic() {
+    if (!audio.src) { loadTrack(0); }
+    if (audio.paused) {
+      musicPlaying = true;
+      audio.play();
+      musicIcon.classList.add('playing');
+    } else {
+      musicPlaying = false;
+      audio.pause();
+      musicIcon.classList.remove('playing');
+    }
+  }
+
+  function nextTrack() {
+    loadTrack(currentTrack + 1);
+    if (!audio.paused) audio.play();
+  }
+
+  audio.addEventListener('timeupdate', function() {
+    if (audio.duration) {
+      musicProgress.style.width = (audio.currentTime / audio.duration * 100) + '%';
+    }
+  });
+
+  audio.addEventListener('ended', function() {
+    loadTrack(currentTrack + 1);
+    audio.play();
+  });
+
+  function setVolume(val) {
+    var v = parseFloat(val);
+    if (isNaN(v)) v = 0;
+    audio.volume = v;
+    volumeSlider.value = v;
+    volumeIcon.classList.toggle('muted', v === 0);
+  }
+
+  function toggleMute() {
+    if (audio.volume > 0) {
+      prevVolume = audio.volume;
+      setVolume(0);
+    } else {
+      setVolume(prevVolume);
+    }
+  }
+
+  volumeSlider.addEventListener('input', function() { setVolume(this.value); });
+  volumeSlider.addEventListener('mousedown', function() { this.classList.add('dragging'); });
+  volumeSlider.addEventListener('mouseup', function() { this.classList.remove('dragging'); });
+  volumeSlider.addEventListener('mouseleave', function() { this.classList.remove('dragging'); });
+  volumeBtn.addEventListener('click', toggleMute);
+  setVolume(volumeSlider.value);
+
+  musicToggle.addEventListener('click', toggleMusic);
+  musicNext.addEventListener('click', nextTrack);
+
+  // Start playing automatically with first user interaction
+  document.addEventListener('click', function initPlay() {
+    if (!audio.src) loadTrack(0);
+    document.removeEventListener('click', initPlay);
+  }, { once: true });
+
+  loadSettings();
+  setMode('focus');
+  updateDisplay();
+  sessionCount.textContent = '1';
+  applySettingsToUI();
+})();
+</script>
+</body>
+</html>
+
